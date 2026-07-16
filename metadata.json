@@ -1,0 +1,6 @@
+{
+  "name": "MotoCare",
+  "description": "A modern mobile-first web application for tracking motorcycle maintenance history, expenses, and service reminders.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

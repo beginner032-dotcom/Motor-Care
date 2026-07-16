@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="128" fill="#003399"/>
+  <!-- Motorcycle Frame -->
+  <path fill="none" stroke="#ffffff" stroke-width="32" stroke-linecap="round" stroke-linejoin="round" d="M180 320h152l48-80H236l-48 80z"/>
+  <!-- Front Wheel -->
+  <circle cx="380" cy="320" r="56" fill="none" stroke="#ffffff" stroke-width="32"/>
+  <!-- Rear Wheel -->
+  <circle cx="132" cy="320" r="56" fill="none" stroke="#ffffff" stroke-width="32"/>
+  <!-- Handlebars -->
+  <path fill="none" stroke="#ffffff" stroke-width="32" stroke-linecap="round" stroke-linejoin="round" d="M300 160l32 80"/>
+  <path fill="none" stroke="#ffffff" stroke-width="32" stroke-linecap="round" stroke-linejoin="round" d="M272 160h48"/>
+  <!-- Seat -->
+  <path fill="none" stroke="#ffffff" stroke-width="32" stroke-linecap="round" stroke-linejoin="round" d="M164 240h56"/>
+</svg>
