@@ -17,7 +17,7 @@ export default function BottomNav({ activeTab, onChangeTab }: BottomNavProps) {
   ];
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white border-t border-[#E2E8F0] h-16 flex justify-around items-center pb-2 pt-1 z-50">
+    <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white dark:bg-gray-800 border-t border-[#E2E8F0] h-16 flex justify-around items-center pb-2 pt-1 z-50">
       {navItems.map((item) => {
         const isActive = activeTab === item.id;
         // Menu doesn't look good filled, so we only fill other icons
@@ -27,7 +27,7 @@ export default function BottomNav({ activeTab, onChangeTab }: BottomNavProps) {
           <button
             key={item.id}
             onClick={() => onChangeTab(item.id)}
-            className={`flex flex-col items-center justify-center gap-1 min-w-[64px] transition-colors ${isActive ? 'text-[#1565C0]' : 'text-[#6B7280]'}`}
+            className={`flex flex-col items-center justify-center gap-1 min-w-[64px] transition-colors ${isActive ? 'text-[#1565C0] dark:text-indigo-400' : 'text-[#6B7280]'}`}
           >
              <item.icon 
                className={`w-6 h-6 ${isActive ? 'stroke-2' : 'stroke-[1.5]'}`} 
