@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { ChevronLeft, Bell, Droplet, Settings, CircleDashed, Wrench, Battery, Wind, Cog } from 'lucide-react';
 import { useActiveMotor } from '../../hooks/useActiveMotor';
+import { useAppData } from '../../hooks/useAppData';
 
 type PengingatViewProps = {
   onChangeTab: (tab: string) => void;
@@ -8,6 +9,7 @@ type PengingatViewProps = {
 
 export default function PengingatView({ onChangeTab }: PengingatViewProps) {
   const { motor } = useActiveMotor();
+  const { serviceLogs, partLogs } = useAppData();
   const currentKm = motor?.currentKm || 0;
 
   const formatKm = (km: number) => {
@@ -19,7 +21,7 @@ export default function PengingatView({ onChangeTab }: PengingatViewProps) {
       {
         id: 'oli',
         title: 'Ganti Oli Mesin',
-        interval: 2500,
+        interval: 3000,
         icon: Droplet,
         color: 'bg-orange-50 dark:bg-orange-900/20 text-orange-500 dark:text-orange-400',
         barColor: 'bg-orange-500',
@@ -82,12 +84,57 @@ export default function PengingatView({ onChangeTab }: PengingatViewProps) {
     ];
 
     return list.map(item => {
-      const nextKm = Math.floor(currentKm / item.interval + 1) * item.interval;
+      // Cari last service km based on id
+      let lastKm = 0;
+      
+      const matchText = (text: string, queries: string[]) => {
+        const lower = text.toLowerCase();
+        return queries.some(q => lower.includes(q));
+      };
+
+      if (item.id === 'oli') {
+        const lastServ = serviceLogs.find(s => ['Ganti Oli Saja', 'Servis Rutin', 'Servis Besar'].includes(s.serviceType) || matchText(s.notes, ['oli', 'mesin']));
+        if (lastServ) lastKm = lastServ.km;
+      } else if (item.id === 'cvt') {
+        const lastServ = serviceLogs.find(s => ['Servis Besar'].includes(s.serviceType) || matchText(s.notes, ['cvt', 'v-belt', 'roller']));
+        const lastPart = partLogs.find(p => matchText(p.name, ['cvt', 'v-belt', 'roller', 'vbelt']));
+        lastKm = Math.max(lastServ?.km || 0, lastPart?.km || 0);
+      } else if (item.id === 'rem') {
+        const lastPart = partLogs.find(p => matchText(p.name, ['rem', 'kampas', 'brake']));
+        if (lastPart) lastKm = lastPart.km;
+      } else if (item.id === 'oli-gardan') {
+        const lastServ = serviceLogs.find(s => matchText(s.notes, ['gardan', 'gear']));
+        const lastPart = partLogs.find(p => matchText(p.name, ['gardan', 'gear']));
+        lastKm = Math.max(lastServ?.km || 0, lastPart?.km || 0);
+      } else if (item.id === 'busi') {
+        const lastPart = partLogs.find(p => matchText(p.name, ['busi', 'spark']));
+        if (lastPart) lastKm = lastPart.km;
+      } else if (item.id === 'radiator') {
+        const lastServ = serviceLogs.find(s => matchText(s.notes, ['radiator', 'coolant', 'air']));
+        const lastPart = partLogs.find(p => matchText(p.name, ['radiator', 'coolant', 'air']));
+        lastKm = Math.max(lastServ?.km || 0, lastPart?.km || 0);
+      } else if (item.id === 'filter') {
+        const lastPart = partLogs.find(p => matchText(p.name, ['filter', 'udara', 'saringan']));
+        if (lastPart) lastKm = lastPart.km;
+      }
+
+      let nextKm = 0;
+      if (lastKm > 0) {
+        nextKm = lastKm + item.interval;
+      } else {
+        nextKm = Math.floor(currentKm / item.interval + 1) * item.interval;
+      }
+
+      // If for some reason nextKm is already passed (e.g. they skipped a service), we should still show it as negative remaining.
+      // But if it's way in the past, maybe they just forgot to log it.
+      // Usually, it's better to just use modulo if nextKm < currentKm and they haven't serviced recently?
+      // No, if nextKm < currentKm, they are late! remainingKm will be negative.
+      
       const remainingKm = nextKm - currentKm;
       const progress = ((item.interval - remainingKm) / item.interval) * 100;
       
       let status: 'aman' | 'peringatan' | 'kritis' = 'aman';
-      if (progress >= 90) status = 'kritis';
+      if (progress >= 90 || remainingKm <= 0) status = 'kritis';
       else if (progress >= 70) status = 'peringatan';
 
       return {
@@ -95,10 +142,11 @@ export default function PengingatView({ onChangeTab }: PengingatViewProps) {
         nextKm,
         remainingKm,
         progress: Math.min(Math.max(progress, 0), 100),
-        status
+        status,
+        lastKm // Include lastKm for debugging/display if needed
       };
     }).sort((a, b) => a.remainingKm - b.remainingKm);
-  }, [currentKm]);
+  }, [currentKm, serviceLogs, partLogs]);
 
   return (
     <div className="pb-24 font-sans bg-[#F8FAFC] dark:bg-gray-900 min-h-screen">

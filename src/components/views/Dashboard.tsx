@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { formatCurrency, formatKm } from '../../mockData';
 import { Wrench, Settings, Fuel, Bell, ChevronRight, Menu, Calendar, MoreHorizontal, Wallet, Droplet, CircleDashed, ChevronDown, X, User, LogOut, Moon, Sun, Info } from 'lucide-react';
 import { useActiveMotor } from '../../hooks/useActiveMotor';
 import { useAppData } from '../../hooks/useAppData';
 import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../contexts/ThemeContext';
+import { doc, setDoc } from 'firebase/firestore';
+import { db } from '../../lib/firebase';
 
 type DashboardProps = {
   onChangeTab: (tab: string) => void;
@@ -28,6 +30,22 @@ export default function Dashboard({ onChangeTab }: DashboardProps) {
 
   const lastService = serviceLogs[0] || null;
 
+  useEffect(() => {
+    if (motor) {
+      const maxKm = Math.max(
+        motor.currentKm || 0,
+        ...fuelLogs.map(l => l.km),
+        ...serviceLogs.map(l => l.km),
+        ...partLogs.map(l => l.km)
+      );
+
+      if (maxKm > motor.currentKm) {
+        const motorRef = doc(db, 'motors', motor.id);
+        setDoc(motorRef, { currentKm: maxKm }, { merge: true }).catch(console.error);
+      }
+    }
+  }, [motor, fuelLogs, serviceLogs, partLogs]);
+
   if (!motor) {
     return (
       <div className="pb-24 font-sans relative h-full flex flex-col items-center justify-center p-6 text-center">
@@ -46,13 +64,38 @@ export default function Dashboard({ onChangeTab }: DashboardProps) {
     );
   }
 
-  const nextOliKm = Math.floor(motor.currentKm / 2500 + 1) * 2500;
+  const matchText = (text: string, queries: string[]) => {
+    const lower = text.toLowerCase();
+    return queries.some(q => lower.includes(q));
+  };
+
+  const getNextServiceKm = (type: string, interval: number) => {
+    let lastKm = 0;
+    if (type === 'oli') {
+      const lastServ = serviceLogs.find(s => ['Ganti Oli Saja', 'Servis Rutin', 'Servis Besar'].includes(s.serviceType) || matchText(s.notes, ['oli', 'mesin']));
+      if (lastServ) lastKm = lastServ.km;
+    } else if (type === 'cvt') {
+      const lastServ = serviceLogs.find(s => ['Servis Besar'].includes(s.serviceType) || matchText(s.notes, ['cvt', 'v-belt', 'roller']));
+      const lastPart = partLogs.find(p => matchText(p.name, ['cvt', 'v-belt', 'roller', 'vbelt']));
+      lastKm = Math.max(lastServ?.km || 0, lastPart?.km || 0);
+    } else if (type === 'rem') {
+      const lastPart = partLogs.find(p => matchText(p.name, ['rem', 'kampas', 'brake']));
+      if (lastPart) lastKm = lastPart.km;
+    }
+
+    if (lastKm > 0) {
+      return lastKm + interval;
+    }
+    return Math.floor((motor?.currentKm || 0) / interval + 1) * interval;
+  };
+
+  const nextOliKm = getNextServiceKm('oli', 3000);
   const oliLagi = nextOliKm - motor.currentKm;
 
-  const nextRemKm = Math.floor(motor.currentKm / 12000 + 1) * 12000;
+  const nextRemKm = getNextServiceKm('rem', 12000);
   const remLagi = nextRemKm - motor.currentKm;
 
-  const nextCvtKm = Math.floor(motor.currentKm / 8000 + 1) * 8000;
+  const nextCvtKm = getNextServiceKm('cvt', 8000);
   const cvtLagi = nextCvtKm - motor.currentKm;
 
   return (
@@ -125,8 +168,8 @@ export default function Dashboard({ onChangeTab }: DashboardProps) {
               </div>
               <span className="text-xs font-semibold text-gray-800 dark:text-gray-100">Servis Berikutnya</span>
             </div>
-            <p className="text-[15px] font-bold text-gray-900 dark:text-white">di {formatKm((lastService?.km || motor.currentKm) + 2500)}</p>
-            <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">± 2.500 km lagi</p>
+            <p className="text-[15px] font-bold text-gray-900 dark:text-white">di {formatKm(nextOliKm)}</p>
+            <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">± {formatKm(oliLagi)} lagi</p>
           </div>
         </div>
 

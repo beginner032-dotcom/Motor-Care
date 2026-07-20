@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import { useAppData } from '../hooks/useAppData';
+import { useActiveMotor } from '../hooks/useActiveMotor';
+import { doc, setDoc } from 'firebase/firestore';
+import { db } from '../lib/firebase';
 
 type AddDataModalProps = {
   type: 'bensin' | 'servis' | 'part' | null;
@@ -10,6 +13,7 @@ type AddDataModalProps = {
 export default function AddDataModal({ type, onClose }: AddDataModalProps) {
   const [formData, setFormData] = useState<any>({});
   const { addFuelLog, addServiceLog, addPartLog } = useAppData();
+  const { motor } = useActiveMotor();
   const [isSaving, setIsSaving] = useState(false);
 
   if (!type) return null;
@@ -22,6 +26,13 @@ export default function AddDataModal({ type, onClose }: AddDataModalProps) {
   const handleSave = async () => {
     setIsSaving(true);
     try {
+      const newKm = Number(formData.km || 0);
+      
+      if (motor && newKm > motor.currentKm) {
+        const motorRef = doc(db, 'motors', motor.id);
+        await setDoc(motorRef, { currentKm: newKm }, { merge: true });
+      }
+
       if (type === 'bensin') {
         const amount = Number(formData.totalPrice || 0);
         await addFuelLog({
