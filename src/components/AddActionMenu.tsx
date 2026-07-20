@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { Fuel, Wrench, Settings, X, ChevronRight } from 'lucide-react';
+import { Fuel, Wrench, Settings, Wallet, X, ChevronRight } from 'lucide-react';
 
 type AddActionMenuProps = {
   isOpen: boolean;
   onClose: () => void;
-  onSelectAction: (action: 'bensin' | 'servis' | 'part') => void;
+  onSelectAction: (action: 'bensin' | 'servis' | 'part' | 'pengeluaran') => void;
 };
 
 export default function AddActionMenu({ isOpen, onClose, onSelectAction }: AddActionMenuProps) {
@@ -17,6 +17,15 @@ export default function AddActionMenu({ isOpen, onClose, onSelectAction }: AddAc
         onClick={onClose}
       />
       <div className="absolute bottom-[130px] right-3 z-50 flex flex-col gap-3 items-end">
+        <button 
+          onClick={() => { onSelectAction('pengeluaran'); onClose(); }}
+          className="flex items-center gap-3 bg-white px-4 py-3 rounded-xl shadow-lg active:scale-95 transition-transform"
+        >
+          <span className="font-semibold text-sm text-gray-700">Pengeluaran Lain</span>
+          <div className="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center text-[#D97706]">
+            <Wallet className="w-5 h-5" />
+          </div>
+        </button>
         <button 
           onClick={() => { onSelectAction('part'); onClose(); }}
           className="flex items-center gap-3 bg-white px-4 py-3 rounded-xl shadow-lg active:scale-95 transition-transform"

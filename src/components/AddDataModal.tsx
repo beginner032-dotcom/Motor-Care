@@ -6,13 +6,13 @@ import { doc, setDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 
 type AddDataModalProps = {
-  type: 'bensin' | 'servis' | 'part' | null;
+  type: 'bensin' | 'servis' | 'part' | 'pengeluaran' | null;
   onClose: () => void;
 };
 
 export default function AddDataModal({ type, onClose }: AddDataModalProps) {
   const [formData, setFormData] = useState<any>({});
-  const { addFuelLog, addServiceLog, addPartLog } = useAppData();
+  const { addFuelLog, addServiceLog, addPartLog, addExpense } = useAppData();
   const { motor } = useActiveMotor();
   const [isSaving, setIsSaving] = useState(false);
 
@@ -65,6 +65,12 @@ export default function AddDataModal({ type, onClose }: AddDataModalProps) {
           date: formData.date || new Date().toISOString().split('T')[0],
           km: Number(formData.km || 0),
           warrantyMonths: Number(formData.warrantyMonths || 0),
+        });
+      } else if (type === 'pengeluaran') {
+        await addExpense({
+          category: formData.category || 'Cuci Motor',
+          amount: Number(formData.amount || 0),
+          date: formData.date || new Date().toISOString().split('T')[0],
         });
       }
       onClose();
@@ -188,11 +194,35 @@ export default function AddDataModal({ type, onClose }: AddDataModalProps) {
     </>
   );
 
+  const renderPengeluaranForm = () => (
+    <>
+      <div className="space-y-4">
+        <div>
+          <label className="block text-xs font-bold text-gray-500 mb-1">Tanggal</label>
+          <input type="date" name="date" onChange={handleChange} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1565C0]/20" />
+        </div>
+        <div>
+          <label className="block text-xs font-bold text-gray-500 mb-1">Kategori Pengeluaran</label>
+          <select name="category" onChange={handleChange} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1565C0]/20">
+            <option value="">Pilih Kategori</option>
+            <option value="Cuci Motor">Cuci Motor</option>
+            <option value="Parkir">Parkir</option>
+            <option value="Lainnya">Lainnya</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-xs font-bold text-gray-500 mb-1">Total Biaya (Rp)</label>
+          <input type="number" name="amount" placeholder="0" onChange={handleChange} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#1565C0]/20" />
+        </div>
+      </div>
+    </>
+  );
+
   return (
     <div className="fixed inset-0 z-[100] flex flex-col bg-white overflow-hidden animate-in slide-in-from-bottom-full duration-300">
       <div className="bg-[#003399] p-4 text-white flex items-center justify-between shadow-md shrink-0">
         <h2 className="font-bold text-lg">
-          {type === 'bensin' ? 'Isi Bensin' : type === 'servis' ? 'Catat Servis' : 'Ganti Part'}
+          {type === 'bensin' ? 'Isi Bensin' : type === 'servis' ? 'Catat Servis' : type === 'part' ? 'Ganti Part' : 'Catat Pengeluaran'}
         </h2>
         <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-colors">
           <X className="w-5 h-5" />
@@ -203,6 +233,7 @@ export default function AddDataModal({ type, onClose }: AddDataModalProps) {
         {type === 'bensin' && renderBensinForm()}
         {type === 'servis' && renderServisForm()}
         {type === 'part' && renderPartForm()}
+        {type === 'pengeluaran' && renderPengeluaranForm()}
       </div>
 
       <div className="p-4 bg-white border-t border-gray-100 shadow-[0_-4px_10px_rgba(0,0,0,0.02)] shrink-0">

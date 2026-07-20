@@ -27,7 +27,7 @@ export default function App() {
   const { user, loading } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isAddMenuOpen, setIsAddMenuOpen] = useState(false);
-  const [addDataModalType, setAddDataModalType] = useState<'bensin' | 'servis' | 'part' | null>(null);
+  const [addDataModalType, setAddDataModalType] = useState<'bensin' | 'servis' | 'part' | 'pengeluaran' | null>(null);
 
   if (loading) {
     return (

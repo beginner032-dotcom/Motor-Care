@@ -91,6 +91,13 @@ export function useAppData() {
     await setDoc(expRef, { id: newId + '_exp', userId: user.uid, category: 'Ganti Part', amount: log.price + log.installCost, date: log.date });
   };
 
+  const addExpense = async (log: Omit<Expense, 'id'>) => {
+    if (!user) return;
+    const newId = Math.random().toString(36).substr(2, 9);
+    const expRef = doc(db, 'expenses', newId);
+    await setDoc(expRef, { ...log, id: newId, userId: user.uid });
+  };
+
   const clearAllData = async () => {
     if (!user) return;
     const userId = user.uid;
@@ -105,5 +112,5 @@ export function useAppData() {
     }
   };
 
-  return { fuelLogs, serviceLogs, partLogs, expenses, loading, addFuelLog, addServiceLog, addPartLog, clearAllData };
+  return { fuelLogs, serviceLogs, partLogs, expenses, loading, addFuelLog, addServiceLog, addPartLog, addExpense, clearAllData };
 }
